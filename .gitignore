@@ -1,0 +1,22 @@
+# Local-only planning and private configuration
+/AGENTS.md
+/PROJECT.md
+/ROADMAP.md
+/STATE.md
+/plans/
+.env
+.env.*
+!.env.example
+
+# Python environment and generated files
+.venv/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+
+# Local runtime data
+*.log
+*.sqlite3
+*.sqlite3-*
+*.db
+*.db-*
