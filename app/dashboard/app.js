@@ -120,7 +120,7 @@ loadButton.addEventListener("click", () => {
   hasNext = false;
   container.replaceChildren();
   if (!token) { status("Enter a token first.", true); controls(); return; }
-  load();
+  return load();
 });
 refreshButton.addEventListener("click", load);
 previousButton.addEventListener("click", () => { page -= 1; load(); });
