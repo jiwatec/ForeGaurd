@@ -1,0 +1,19 @@
+:root { color-scheme: light; font: 16px/1.5 system-ui, sans-serif; background: #f3f5f7; color: #182532; }
+body { margin: 0; }
+main { max-width: 920px; margin: 0 auto; padding: 1.5rem; }
+header, section { margin-bottom: 1.5rem; }
+section { background: #fff; border: 1px solid #ccd4dc; border-radius: 8px; padding: 1rem 1.25rem; }
+h1, h2, h3 { margin: 0 0 .5rem; }
+p { margin: .5rem 0; }
+label { display: block; font-weight: 600; }
+input { box-sizing: border-box; max-width: 100%; width: 24rem; padding: .5rem; }
+button { margin: .4rem .4rem .4rem 0; padding: .45rem .8rem; cursor: pointer; }
+button:disabled { cursor: not-allowed; opacity: .55; }
+.heading { display: flex; justify-content: space-between; align-items: center; }
+.requests { display: grid; gap: .8rem; }
+article { border: 1px solid #ccd4dc; border-radius: 6px; padding: 1rem; overflow-wrap: anywhere; }
+article p { margin: .25rem 0; }
+pre { white-space: pre-wrap; overflow-wrap: anywhere; background: #f3f5f7; padding: .6rem; }
+.status { font-weight: 700; }
+.error { color: #9b1824; }
+nav { margin-top: 1rem; }

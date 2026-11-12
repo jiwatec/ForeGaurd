@@ -2,7 +2,9 @@
 
 from contextlib import contextmanager
 import json
+import os
 import sqlite3
+import stat
 import time
 from uuid import uuid4
 
@@ -17,6 +19,20 @@ class Store:
     def __init__(self, path, clock=time.time):
         self.path = str(path)
         self.clock = clock
+        # Audit records can contain sensitive command text. Require a private
+        # directory and file before handing the path to SQLite.
+        parent = os.path.dirname(os.path.abspath(self.path))
+        if stat.S_IMODE(os.stat(parent).st_mode) & 0o077:
+            raise PermissionError("Audit directory must be private")
+        try:
+            fd = os.open(self.path, os.O_CREAT | os.O_EXCL | os.O_WRONLY | os.O_NOFOLLOW, 0o600)
+        except FileExistsError:
+            pass
+        else:
+            os.close(fd)
+        info = os.lstat(self.path)
+        if not stat.S_ISREG(info.st_mode) or stat.S_IMODE(info.st_mode) & 0o077:
+            raise PermissionError("Audit database must be a private regular file")
         with self.connection() as db:
             db.executescript("""
                 CREATE TABLE IF NOT EXISTS requests (

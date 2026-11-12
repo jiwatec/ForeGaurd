@@ -75,3 +75,9 @@ class StoreTests(unittest.TestCase):
             self.store.history(limit=1000)
         with self.assertRaises(ValueError):
             self.store.submit(**self.identity, ttl=-1)
+
+    def test_audit_file_is_private(self):
+        self.assertEqual(self.path.stat().st_mode & 0o777, 0o600)
+        self.path.chmod(0o644)
+        with self.assertRaises(PermissionError):
+            Store(self.path)
