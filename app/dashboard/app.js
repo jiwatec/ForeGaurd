@@ -78,10 +78,12 @@ async function load() {
     for (const record of result.requests) render(record);
     hasNext = result.requests.length === pageSize;
     status(result.requests.length ? `Showing ${result.requests.length} requests.` : "No requests on this page.");
+    return true;
   } catch (error) {
     container.replaceChildren();
     status(error.message, true);
     hasNext = false;
+    return false;
   } finally {
     busy = false;
     controls();
@@ -102,14 +104,20 @@ async function decide(record, decision) {
       body: JSON.stringify({ command: record.command, cwd: record.cwd, source: record.source, decision }),
       cache: "no-store"
     });
-    if (!response.ok) throw new Error(response.status === 401 ? "Access denied. Check your token." : "Decision failed or request expired. Refresh to see its current status.");
+    if (response.status === 409) {
+      busy = false;
+      if (await load()) status("Decision not applied: request changed or expired.", true);
+      return;
+    }
+    if (!response.ok) throw new Error(response.status === 401 ? "Access denied. Check your token." : "Decision failed. Try again or refresh.");
     busy = false;
     await load();
   } catch (error) {
     status(error.message, true);
     busy = false;
     controls();
-    container.querySelectorAll("button").forEach(button => { button.disabled = false; });
+    if (error.message.startsWith("Access denied")) container.replaceChildren();
+    else container.querySelectorAll("button").forEach(button => { button.disabled = false; });
   }
 }
 

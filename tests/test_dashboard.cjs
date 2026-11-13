@@ -87,3 +87,21 @@ test("shows expired requests without decision controls and reports access errors
   assert.match(elements.message.textContent, /Access denied/);
   assert.equal(elements.requests.children.length, 0);
 });
+
+test("stale approval refreshes to expired and removes obsolete buttons", async () => {
+  let state = "PENDING";
+  const { elements, calls } = setup((url, options) => {
+    if (options.method === "POST") {
+      state = "EXPIRED";
+      return response({}, false, 409);
+    }
+    return response({ requests: [request(state, "id-three")] });
+  });
+  elements.token.value = "test-token";
+  await elements.load.click();
+  await elements.requests.querySelectorAll("button")[0].click();
+  assert.equal(calls.length, 3);
+  assert.equal(elements.requests.children[0].children[0].textContent, "EXPIRED");
+  assert.equal(elements.requests.querySelectorAll("button").length, 0);
+  assert.match(elements.message.textContent, /Decision not applied/);
+});
