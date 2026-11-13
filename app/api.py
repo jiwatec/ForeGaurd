@@ -14,7 +14,7 @@ from app.store import ApprovalError, Store
 
 
 app = FastAPI(title="ForeGuard", docs_url=None, redoc_url=None)
-ASSETS = Path(__file__).parent / "dashboard"
+ASSETS = Path(__file__).parent / "dashboard" / "dist"
 
 
 @app.middleware("http")
@@ -93,18 +93,17 @@ def health():
 
 
 @app.get("/review", include_in_schema=False)
+@app.get("/review/", include_in_schema=False)
 def dashboard():
     return FileResponse(ASSETS / "index.html")
 
 
-@app.get("/review/app.js", include_in_schema=False)
-def dashboard_script():
-    return FileResponse(ASSETS / "app.js", media_type="application/javascript")
-
-
-@app.get("/review/style.css", include_in_schema=False)
-def dashboard_style():
-    return FileResponse(ASSETS / "style.css", media_type="text/css")
+@app.get("/review/assets/{asset_name}", include_in_schema=False)
+def dashboard_asset(asset_name: str):
+    # Built files only: do not expose source files or arbitrary filesystem paths.
+    if asset_name not in {file.name for file in (ASSETS / "assets").iterdir() if file.is_file()}:
+        return blocked_error(404, "Asset unavailable")
+    return FileResponse(ASSETS / "assets" / asset_name)
 
 
 @app.post("/api/commands/analyze")

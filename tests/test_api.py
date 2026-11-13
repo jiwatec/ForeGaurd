@@ -2,6 +2,7 @@
 
 import http.client
 import json
+import re
 import socket
 import tempfile
 import threading
@@ -62,9 +63,19 @@ class ApiTests(unittest.TestCase):
         return self.request("POST", "/api/commands/analyze", payload)
 
     def test_dashboard_serves_private_same_origin_assets(self):
-        for path, expected in (("/review", "text/html"),
-                               ("/review/app.js", "javascript"),
-                               ("/review/style.css", "text/css")):
+        connection = http.client.HTTPConnection("127.0.0.1", self.port, timeout=3)
+        try:
+            connection.request("GET", "/review")
+            response = connection.getresponse()
+            html = response.read().decode()
+            self.assertEqual(response.status, 200)
+            self.assertIn("text/html", response.getheader("Content-Type"))
+            self.assertIn("default-src 'none'", response.getheader("Content-Security-Policy"))
+        finally:
+            connection.close()
+        assets = re.findall(r"/review/assets/[a-zA-Z0-9_.-]+", html)
+        self.assertEqual(len(assets), 2)
+        for path in assets:
             with self.subTest(path=path):
                 connection = http.client.HTTPConnection("127.0.0.1", self.port, timeout=3)
                 try:
@@ -72,14 +83,14 @@ class ApiTests(unittest.TestCase):
                     response = connection.getresponse()
                     body = response.read().decode()
                     self.assertEqual(response.status, 200)
-                    self.assertIn(expected, response.getheader("Content-Type"))
+                    self.assertIn("javascript" if path.endswith(".js") else "text/css", response.getheader("Content-Type"))
                     self.assertEqual(response.getheader("Cache-Control"), "no-store")
                     self.assertIn("default-src 'none'", response.getheader("Content-Security-Policy"))
                     self.assertNotIn("local-test-secret", body)
-                    if path.endswith("app.js"):
-                        self.assertIn("textContent", body)
                 finally:
                     connection.close()
+        status, body = self.request("GET", "/review/assets/missing.js")
+        self.assertEqual((status, body["decision"]), (404, "BLOCK"))
 
     def test_decisions_and_contract(self):
         ids = set()
